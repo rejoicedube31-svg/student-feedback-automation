@@ -1,0 +1,329 @@
+{
+  "name": "Student Feedback Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "student-feedback",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-receive",
+      "name": "Receive Feedback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "student-feedback"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body ?? $input.first().json;\n\nconst required = ['studentName', 'email', 'courseName', 'rating', 'feedbackMessage'];\nconst missing = required.filter((field) => {\n  const value = body[field];\n  return value === undefined || value === null || String(value).trim() === '';\n});\n\nif (missing.length > 0) {\n  return [{\n    json: {\n      valid: false,\n      error: `Missing required fields: ${missing.join(', ')}`,\n      statusCode: 400\n    }\n  }];\n}\n\nconst rating = Number(body.rating);\nif (Number.isNaN(rating) || rating < 1 || rating > 5) {\n  return [{\n    json: {\n      valid: false,\n      error: 'Rating must be a number between 1 and 5.',\n      statusCode: 400\n    }\n  }];\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(String(body.email))) {\n  return [{\n    json: {\n      valid: false,\n      error: 'Invalid email address.',\n      statusCode: 400\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    valid: true,\n    studentName: String(body.studentName).trim(),\n    email: String(body.email).trim(),\n    courseName: String(body.courseName).trim(),\n    rating,\n    feedbackMessage: String(body.feedbackMessage).trim(),\n    submittedAt: body.submittedAt || new Date().toISOString()\n  }\n}];"
+      },
+      "id": "validate-data",
+      "name": "Validate Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "validation-check",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-valid",
+      "name": "Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "rating-check",
+              "leftValue": "={{ $json.rating }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-rating",
+      "name": "Rating <= 2?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [960, 220]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status-urgent",
+              "name": "feedbackStatus",
+              "value": "Needs Attention",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "mark-urgent",
+      "name": "Mark Needs Attention",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1200, 120]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status-ok",
+              "name": "feedbackStatus",
+              "value": "Received",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "mark-received",
+      "name": "Mark Received",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1200, 320]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Submitted At": "={{ $json.submittedAt }}",
+            "Student Name": "={{ $json.studentName }}",
+            "Email": "={{ $json.email }}",
+            "Course Name": "={{ $json.courseName }}",
+            "Rating": "={{ $json.rating }}",
+            "Feedback Message": "={{ $json.feedbackMessage }}",
+            "Status": "={{ $json.feedbackStatus }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "store-feedback",
+      "name": "Store in Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1440, 220],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "training@yourcompany.com",
+        "toEmail": "={{ $json.email }}",
+        "subject": "Thank you for your feedback",
+        "emailType": "text",
+        "message": "Hello {{ $json.studentName }},\n\nThank you for your feedback! Your response has been received successfully.\n\nCourse: {{ $json.courseName }}\nRating: {{ $json.rating }}/5\n\nWe appreciate you taking the time to help us improve.\n\nBest regards,\nTraining Team"
+      },
+      "id": "send-email",
+      "name": "Send Thank You Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1680, 220],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Thank you for your feedback! Your response has been received successfully.\" } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1920, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": false, \"message\": $json.error } }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode || 400 }}"
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 460]
+    }
+  ],
+  "connections": {
+    "Receive Feedback": {
+      "main": [
+        [
+          {
+            "node": "Validate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Data": {
+      "main": [
+        [
+          {
+            "node": "Is Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid?": {
+      "main": [
+        [
+          {
+            "node": "Rating <= 2?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rating <= 2?": {
+      "main": [
+        [
+          {
+            "node": "Mark Needs Attention",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Received",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Needs Attention": {
+      "main": [
+        [
+          {
+            "node": "Store in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Received": {
+      "main": [
+        [
+          {
+            "node": "Store in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Send Thank You Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Thank You Email": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
