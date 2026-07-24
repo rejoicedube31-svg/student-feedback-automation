@@ -1,129 +1,75 @@
-# Loom Video Script — Student Feedback Automation
+# Loom Read-Aloud Script (Short)
 
-Use this as your speaking guide. Target length: **5–8 minutes**.
-
----
-
-## 1. Introduction (30 seconds)
-
-**Say:**
-> Hi, I'm [Your Name]. For this assignment, I built a student feedback automation system using React for the front end and n8n for workflow automation. When a student submits feedback through the web form, n8n validates the data, stores it in Google Sheets, applies conditional logic based on the rating, and sends an automated thank-you email.
-
-**Show:** Your running React form in the browser.
+Read this out loud. About **4–5 minutes**.
 
 ---
 
-## 2. Front-End Walkthrough (1–2 minutes)
+## 1. Introduction
 
-**Say:**
-> The front end is a responsive React form with all required fields: student name, email, course name, rating from 1 to 5, and a feedback message.
+Hi, I’m [Your Name].
 
-**Demonstrate:**
-1. Resize the browser to show mobile responsiveness.
-2. Click Submit with empty fields → show validation errors.
-3. Enter invalid email → show email error.
-4. Fill in valid data and submit.
+For this assignment, I built a Student Feedback Automation System using React and n8n.
 
-**Explain the code:**
-- `App.jsx` — form UI, state, and submit handler
-- `api.js` — client-side validation + `fetch()` POST to n8n webhook
-- Success and error messages appear after submission
+When a student submits feedback, n8n validates the data, stores it in Google Sheets, flags low ratings, and sends a thank-you notification to Discord.
 
-**Say:**
-> Client-side validation gives instant feedback. The form sends JSON to n8n using the Fetch API.
+I’ll explain each node in n8n, then demo the form, and finally show the spreadsheet proof.
 
 ---
 
-## 3. n8n Workflow Overview (2–3 minutes)
+## 2. n8n workflow
 
-**Show:** Full n8n workflow screenshot (all nodes visible).
+This is my n8n workflow. It is Active, and data flows from left to right.
 
-**Say:**
-> Here is my n8n workflow. Data flows from left to right through each step.
+**Receive Feedback** is the Webhook. It receives the POST request from my React form.
 
-### Node-by-node explanation
+**Validate Data** checks that all required fields are present, the email is valid, and the rating is between 1 and 5.
 
-| Node | What to say |
-|------|-------------|
-| **Receive Feedback (Webhook)** | Receives POST requests from the React form at `/webhook/student-feedback`. |
-| **Validate Data (Code)** | Checks that all required fields exist, email format is valid, and rating is 1–5. Returns an error if validation fails. |
-| **Is Valid? (IF)** | Routes valid submissions forward; invalid ones go to the error response. |
-| **Rating <= 2? (IF)** | Conditional logic: low ratings need extra attention. |
-| **Mark Needs Attention (Set)** | If rating is 1 or 2, status = `Needs Attention`. |
-| **Mark Received (Set)** | If rating is 3–5, status = `Received`. |
-| **Store in Google Sheets** | Appends a new row with all feedback fields and the status. |
-| **Send Thank You Email** | Sends: *"Thank you for your feedback! Your response has been received successfully."* |
-| **Respond Success / Respond Error** | Sends JSON back to the React app so the user sees success or error. |
+**Is Valid?** decides the next step. Invalid data goes to **Respond Error**. Valid data continues.
 
-**Show:** Google Sheet with a test row (include both a low-rating and high-rating example if possible).
+**Rating ≤ 2?** applies the assignment’s conditional logic.
 
----
+If the rating is 1 or 2, **Mark Needs Attention** sets the status to “Needs Attention.”
 
-## 4. Live Demo (1–2 minutes)
+If the rating is above 2, **Mark Received** sets the status to “Received.”
 
-**Demonstrate two submissions:**
+**Store in Google Sheets** appends a row with the student details, rating, feedback, and status.
 
-### Test A — Low rating (rating = 2)
-1. Submit form with rating 2.
-2. Show success message on the form.
-3. Show Google Sheet → new row with status **Needs Attention**.
-4. Show thank-you email in inbox.
+**HTTP Request** sends a thank-you message to Discord through a webhook. The rubric allows email, Discord, Telegram, or Slack — I used Discord.
 
-### Test B — High rating (rating = 5)
-1. Submit form with rating 5.
-2. Show Google Sheet → status **Received**.
+**Respond Success** returns a success message to the React form.
 
-**Say:**
-> The same workflow handles both cases automatically. Low ratings are flagged for follow-up; all submissions are stored and acknowledged by email.
+So the flow is: receive, validate, apply rating logic, store, notify, and respond.
 
 ---
 
-## 5. Reflection Questions (1 minute)
+## 3. Form demo
 
-Answer these honestly in your own words:
+This is the React feedback form. It includes Student Name, Email, Course Name, Rating 1–5, Feedback Message, and Submit.
 
-### What challenges did you encounter?
-Examples you can adapt:
-- Connecting the React app to the n8n webhook URL
-- CORS errors when testing locally
-- Setting up Google Sheets or SMTP credentials in n8n
-- Mapping form field names to n8n node expressions
+It has client-side validation and submits using the Fetch API.
 
-### How did you solve them?
-Examples:
-- Copied the Production Webhook URL from n8n into `.env`
-- Activated the workflow in n8n before testing
-- Created Google Sheet columns to match the workflow mapping
-- Used n8n's test execution to debug each node
+I’ll submit one entry with rating 2 to show the “Needs Attention” path.
 
-### What did you learn about workflow automation?
-Examples:
-- Automation connects separate tools (form → storage → email) without custom backend code
-- Validation can happen on both client and server/workflow side
-- Conditional logic lets you route data differently based on business rules
-- n8n makes it visual and easy to trace each step
+The form shows: “Thank you for your feedback! Your response has been received successfully.”
+
+That means n8n received and processed the submission.
 
 ---
 
-## 6. Closing (15 seconds)
+## 4. Spreadsheet proof
 
-**Say:**
-> This project showed me how front-end forms and automation workflows work together. The React app collects feedback, and n8n handles validation, storage, conditional routing, and notifications automatically. Thank you for watching.
+Here is the Google Sheet connected to the workflow.
+
+Each submission adds a new row with Submitted At, Student Name, Email, Course Name, Rating, Feedback Message, and Status.
+
+In this latest row, the rating is 2 and the status is “Needs Attention,” which confirms the conditional logic worked.
+
+Higher ratings are marked as “Received.”
 
 ---
 
-## Checklist Before Recording
+## 5. Closing
 
-- [ ] React app runs (`npm run dev`)
-- [ ] n8n workflow is **Active**
-- [ ] Webhook URL is in `.env`
-- [ ] Google Sheet has correct column headers
-- [ ] Email credentials are configured in n8n
-- [ ] Workflow JSON exported to `n8n/student-feedback-workflow.json`
-- [ ] Test submission works end-to-end
+That’s my Student Feedback Automation System: React for the form, n8n for the workflow, Google Sheets for storage, and Discord for the thank-you notification.
 
-## What to Submit in Google Classroom
-
-1. **Source code** — this React project folder
-2. **n8n workflow** — `n8n/student-feedback-workflow.json`
-3. **Loom video** — link to your recording
+Thank you for watching.

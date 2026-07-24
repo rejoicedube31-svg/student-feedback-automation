@@ -8,22 +8,28 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "webhook-receive",
+      "id": "26692070-44ac-43cf-9ee1-bb0609df543a",
       "name": "Receive Feedback",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 300],
+      "position": [
+        -832,
+        640
+      ],
       "webhookId": "student-feedback"
     },
     {
       "parameters": {
         "jsCode": "const body = $input.first().json.body ?? $input.first().json;\n\nconst required = ['studentName', 'email', 'courseName', 'rating', 'feedbackMessage'];\nconst missing = required.filter((field) => {\n  const value = body[field];\n  return value === undefined || value === null || String(value).trim() === '';\n});\n\nif (missing.length > 0) {\n  return [{\n    json: {\n      valid: false,\n      error: `Missing required fields: ${missing.join(', ')}`,\n      statusCode: 400\n    }\n  }];\n}\n\nconst rating = Number(body.rating);\nif (Number.isNaN(rating) || rating < 1 || rating > 5) {\n  return [{\n    json: {\n      valid: false,\n      error: 'Rating must be a number between 1 and 5.',\n      statusCode: 400\n    }\n  }];\n}\n\nconst emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nif (!emailRegex.test(String(body.email))) {\n  return [{\n    json: {\n      valid: false,\n      error: 'Invalid email address.',\n      statusCode: 400\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    valid: true,\n    studentName: String(body.studentName).trim(),\n    email: String(body.email).trim(),\n    courseName: String(body.courseName).trim(),\n    rating,\n    feedbackMessage: String(body.feedbackMessage).trim(),\n    submittedAt: body.submittedAt || new Date().toISOString()\n  }\n}];"
       },
-      "id": "validate-data",
+      "id": "8559678e-83d5-44f1-b3e0-0df4d9bd194d",
       "name": "Validate Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [480, 300]
+      "position": [
+        -592,
+        640
+      ]
     },
     {
       "parameters": {
@@ -48,11 +54,14 @@
         },
         "options": {}
       },
-      "id": "if-valid",
+      "id": "7c205922-7ee9-45b8-8d3b-530be248641a",
       "name": "Is Valid?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [720, 300]
+      "position": [
+        -352,
+        640
+      ]
     },
     {
       "parameters": {
@@ -77,11 +86,14 @@
         },
         "options": {}
       },
-      "id": "if-rating",
+      "id": "1a6f86d3-71da-41d0-a5cf-50eb7f53d11e",
       "name": "Rating <= 2?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [960, 220]
+      "position": [
+        -112,
+        560
+      ]
     },
     {
       "parameters": {
@@ -98,11 +110,14 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "mark-urgent",
+      "id": "e8b7d2d2-0019-47f8-9c94-b40a12f04ba5",
       "name": "Mark Needs Attention",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1200, 120]
+      "position": [
+        128,
+        448
+      ]
     },
     {
       "parameters": {
@@ -119,24 +134,29 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "mark-received",
+      "id": "9830650f-1cdb-407c-9d2b-d0fd00dc073e",
       "name": "Mark Received",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1200, 320]
+      "position": [
+        128,
+        656
+      ]
     },
     {
       "parameters": {
         "operation": "append",
         "documentId": {
           "__rl": true,
+          "value": "1aV1ZB8yHbku6nooOvA_3IuvrOowk9mBeJTO1zvTTVp4",
           "mode": "list",
-          "value": ""
+          "cachedResultName": "Student Feedback",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aV1ZB8yHbku6nooOvA_3IuvrOowk9mBeJTO1zvTTVp4/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
-          "mode": "list",
-          "value": "Sheet1"
+          "value": "https://docs.google.com/spreadsheets/d/1aV1ZB8yHbku6nooOvA_3IuvrOowk9mBeJTO1zvTTVp4/edit?gid=0#gid=0",
+          "mode": "url"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -148,39 +168,90 @@
             "Rating": "={{ $json.rating }}",
             "Feedback Message": "={{ $json.feedbackMessage }}",
             "Status": "={{ $json.feedbackStatus }}"
-          }
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Submitted At",
+              "displayName": "Submitted At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Student Name",
+              "displayName": "Student Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Course Name",
+              "displayName": "Course Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback Message",
+              "displayName": "Feedback Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {}
       },
-      "id": "store-feedback",
+      "id": "e7e62071-e47b-4994-99b7-6e2b75d40842",
       "name": "Store in Google Sheets",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [1440, 220],
+      "position": [
+        368,
+        560
+      ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "id": "UgN04zBGlj7xx7k3",
           "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "fromEmail": "training@yourcompany.com",
-        "toEmail": "={{ $json.email }}",
-        "subject": "Thank you for your feedback",
-        "emailType": "text",
-        "message": "Hello {{ $json.studentName }},\n\nThank you for your feedback! Your response has been received successfully.\n\nCourse: {{ $json.courseName }}\nRating: {{ $json.rating }}/5\n\nWe appreciate you taking the time to help us improve.\n\nBest regards,\nTraining Team"
-      },
-      "id": "send-email",
-      "name": "Send Thank You Email",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [1680, 220],
-      "credentials": {
-        "smtp": {
-          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
-          "name": "SMTP account"
         }
       }
     },
@@ -192,11 +263,14 @@
           "responseCode": 200
         }
       },
-      "id": "respond-success",
+      "id": "796333d9-1f58-4d8d-b38f-35bec2c00284",
       "name": "Respond Success",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1920, 220]
+      "position": [
+        1264,
+        560
+      ]
     },
     {
       "parameters": {
@@ -206,13 +280,35 @@
           "responseCode": "={{ $json.statusCode || 400 }}"
         }
       },
-      "id": "respond-error",
+      "id": "5e37cae1-ad2a-495a-a72b-43fa8fd95995",
       "name": "Respond Error",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [960, 460]
+      "position": [
+        -112,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/webhooks/1530245731967832175/n-VK7f-521fVOH8cmSVnilCJFkjSHk-7z75zQChRDIXPsvs9nexOUsxhksxLf5W1qzJy",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"Thank you for your feedback! Your response has been received successfully.\\nStudent: {{ $json.studentName }}\\nCourse: {{ $json.courseName }}\\nRating: {{ $json.rating }}/5\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        576,
+        560
+      ],
+      "id": "538c86cd-8b3c-4b02-a1b4-56782d1061be",
+      "name": "HTTP Request"
     }
   ],
+  "pinData": {},
   "connections": {
     "Receive Feedback": {
       "main": [
@@ -298,14 +394,14 @@
       "main": [
         [
           {
-            "node": "Send Thank You Email",
+            "node": "HTTP Request",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Send Thank You Email": {
+    "HTTP Request": {
       "main": [
         [
           {
@@ -317,13 +413,15 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "1",
+  "versionId": "90e60ba8-44ab-4537-ad61-245fde751ca1",
   "meta": {
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2df6c945954108f0c22764efdac938e565ac39af1a42277ffb14590d6770aa6c"
   },
+  "id": "W9YddgzzT740e1OA",
   "tags": []
 }
